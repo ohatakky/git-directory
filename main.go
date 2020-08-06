@@ -3,64 +3,36 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"strconv"
-	"time"
+	"net/http"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/ohatakky/git-directory/pkg/ws"
 )
 
-type Commit struct {
-	Hash  string
-	Files *object.FileIter
-}
-
-type Response struct {
-	Idx  int
-	Tree []string
-}
-
 func main() {
-	str := strconv.FormatInt(time.Now().UTC().Unix(), 10)
-	r, err := git.PlainClone(fmt.Sprintf("./tmp/echo_%s", str), false, &git.CloneOptions{
-		URL:        "https://github.com/labstack/echo",
-		Progress:   os.Stdout,
-		NoCheckout: true,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	commits := make([]Commit, 0)
-	cIter, err := r.Log(&git.LogOptions{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = cIter.ForEach(func(c *object.Commit) error {
-		files, err := c.Files()
-		if err != nil {
-			log.Fatal(err)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
 		}
-		commits = append(commits, Commit{
-			Hash:  c.Hash.String(),
-			Files: files,
-		})
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+		c := ws.New(w, r)
+		defer c.Conn.Close()
 
-	for i := len(commits) - 1; i >= 0; i-- {
-		fmt.Println("-----------", commits[i].Hash, "---------------")
-		// todo: websocketでResponse返す
-		err := commits[i].Files.ForEach(func(f *object.File) error {
-			fmt.Println(f.Name)
-			return nil
-		})
-		if err != nil {
-			log.Fatal(err)
+		for {
+			// Read message from browser
+			msgType, msg, err := c.Conn.ReadMessage()
+			if err != nil {
+				return
+			}
+
+			// Print the message to the console
+			fmt.Printf("%s sent: %s\n", c.Conn.RemoteAddr(), string(msg))
+
+			// Write message back to browser
+			if err = c.Conn.WriteMessage(msgType, msg); err != nil {
+				return
+			}
 		}
-	}
+	})
+	log.Println("running...")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
