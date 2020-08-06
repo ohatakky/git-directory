@@ -1,12 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/ohatakky/git-directory/pkg/ws"
 )
+
+type Hoge struct {
+	Num int `json:"num"`
+}
 
 func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -17,22 +20,16 @@ func main() {
 		c := ws.New(w, r)
 		defer c.Conn.Close()
 
-		for {
-			// Read message from browser
-			msgType, msg, err := c.Conn.ReadMessage()
+		for i := 0; i < 100; i++ {
+			err := c.Conn.WriteJSON(&Hoge{
+				Num: 3,
+			})
 			if err != nil {
-				return
-			}
-
-			// Print the message to the console
-			fmt.Printf("%s sent: %s\n", c.Conn.RemoteAddr(), string(msg))
-
-			// Write message back to browser
-			if err = c.Conn.WriteMessage(msgType, msg); err != nil {
 				return
 			}
 		}
 	})
+
 	log.Println("running...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
