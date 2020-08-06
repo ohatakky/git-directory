@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -16,15 +15,19 @@ type Commit struct {
 	Files *object.FileIter
 }
 
-type Response struct {
-	Idx  int
-	Tree []string
+// todo: CommitHashも返す
+type Tree struct {
+	Idx int      `json:"idx"`
+	T   []string `json:"t"`
 }
 
-type Client struct {
+type Client struct{}
+
+func New() *Client {
+	return &Client{}
 }
 
-func (c *Client) XXX() {
+func (c *Client) Commits() ([]Commit, error) {
 	str := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 	r, err := git.PlainClone(fmt.Sprintf("./tmp/echo_%s", str), false, &git.CloneOptions{
 		URL:        "https://github.com/labstack/echo",
@@ -32,18 +35,18 @@ func (c *Client) XXX() {
 		NoCheckout: true,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	commits := make([]Commit, 0)
 	cIter, err := r.Log(&git.LogOptions{})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	err = cIter.ForEach(func(c *object.Commit) error {
 		files, err := c.Files()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		commits = append(commits, Commit{
 			Hash:  c.Hash.String(),
@@ -52,18 +55,8 @@ func (c *Client) XXX() {
 		return nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	for i := len(commits) - 1; i >= 0; i-- {
-		fmt.Println("-----------", commits[i].Hash, "---------------")
-		// todo: websocketでResponse返す
-		err := commits[i].Files.ForEach(func(f *object.File) error {
-			fmt.Println(f.Name)
-			return nil
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	return commits, nil
 }
