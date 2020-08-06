@@ -16,6 +16,11 @@ type Commit struct {
 	Files *object.FileIter
 }
 
+type Response struct {
+	Idx  int
+	Tree []string
+}
+
 func main() {
 	str := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 	r, err := git.PlainClone(fmt.Sprintf("./tmp/echo_%s", str), false, &git.CloneOptions{
@@ -49,6 +54,7 @@ func main() {
 
 	for i := len(commits) - 1; i >= 0; i-- {
 		fmt.Println("-----------", commits[i].Hash, "---------------")
+		// todo: websocketでResponse返す
 		err := commits[i].Files.ForEach(func(f *object.File) error {
 			fmt.Println(f.Name)
 			return nil
