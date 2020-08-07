@@ -12,12 +12,11 @@ type Client struct {
 }
 
 func New(w http.ResponseWriter, r *http.Request) *Client {
-	protocol := r.Header.Get("Sec-Websocket-Protocol")
 	upgrader := websocket.Upgrader{
-		Subprotocols: []string{protocol},
-		// CheckOrigin: func(r *http.Request) bool {
-		// 	return r.Header.Get("Origin") == "xxxxx"
-		// },
+		CheckOrigin: func(r *http.Request) bool {
+			// return r.Header.Get("Origin") == "xxxxx"
+			return true
+		},
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}

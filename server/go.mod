@@ -1,4 +1,4 @@
-module github.com/ohatakky/git-directory
+module github.com/ohatakky/git-directory/server
 
 go 1.14
 
