@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -19,7 +18,6 @@ func main() {
 		err := g.Clone()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			fmt.Println(err)
 			return
 		}
 
@@ -31,6 +29,7 @@ func main() {
 		for tree := range g.Send {
 			err := c.Conn.WriteJSON(tree)
 			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
