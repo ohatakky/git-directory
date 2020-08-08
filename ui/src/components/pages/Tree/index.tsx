@@ -10,9 +10,12 @@ import { useParams } from "react-router-dom";
 import { WS_API_HOST } from "~/utils/constants";
 
 type Tree = {
-  i: number;
   hash: string;
-  t: string[];
+  list: string[];
+  commit: {
+    author: string;
+    message: string;
+  };
 };
 
 const actionTypes = {
@@ -46,7 +49,7 @@ const TreeFC: FC = () => {
       } catch (e) {
         dispatch({
           type: actionTypes.failed,
-          payload: { i: 0, hash: "", t: [] },
+          payload: { hash: "", list: [], commit: { author: "", message: "" } },
         });
       }
     };
@@ -87,7 +90,7 @@ const TreeFC: FC = () => {
           </div>
           <div style={{ color: "#eee8d5", fontSize: 10, fontFamily: "Monaco" }}>
             <div>tree</div>
-            {trees[idx].t.map((d) => (
+            {trees[idx].list.map((d) => (
               <div key={d}>{d}</div>
             ))}
           </div>
