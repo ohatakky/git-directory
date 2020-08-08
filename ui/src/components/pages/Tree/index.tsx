@@ -1,17 +1,15 @@
-import React, {
-  FC,
-  Fragment,
-  useState,
-  useEffect,
-  useReducer,
-  useCallback,
-} from "react";
+import React, { FC, Fragment, useState, useEffect, useReducer } from "react";
 import { useParams } from "react-router-dom";
 import { WS_API_HOST } from "~/utils/constants";
 
+type File = {
+  dir: string;
+  name: string;
+};
+
 type Tree = {
   hash: string;
-  list: string[];
+  files: File[];
   commit: {
     author: string;
     message: string;
@@ -49,7 +47,7 @@ const TreeFC: FC = () => {
       } catch (e) {
         dispatch({
           type: actionTypes.failed,
-          payload: { hash: "", list: [], commit: { author: "", message: "" } },
+          payload: { hash: "", files: [], commit: { author: "", message: "" } },
         });
       }
     };
@@ -90,8 +88,8 @@ const TreeFC: FC = () => {
           </div>
           <div style={{ color: "#eee8d5", fontSize: 10, fontFamily: "Monaco" }}>
             <div>tree</div>
-            {trees[idx].list.map((d) => (
-              <div key={d}>{d}</div>
+            {trees[idx].files.map((f, i) => (
+              <div key={i}>{`dir: ${f.dir}, file: ${f.name} `}</div>
             ))}
           </div>
         </Fragment>

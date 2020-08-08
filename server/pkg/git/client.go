@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -95,9 +96,14 @@ func (c *Client) commits() ([]Commit, error) {
 	return commits, nil
 }
 
+type File struct {
+	Dir  string `json:"dir"`
+	Name string `json:"name"`
+}
+
 type Tree struct {
-	Hash   string   `json:"hash"`
-	List   []string `json:"list"`
+	Hash   string `json:"hash"`
+	Files  []File `json:"files"`
 	Commit struct {
 		Message string `json:"message"`
 		Author  string `json:"author"`
@@ -114,8 +120,8 @@ func (c *Client) Trees() error {
 
 	for i := len(commits) - 1; i >= 0; i-- {
 		tree := Tree{
-			Hash: commits[i].Hash,
-			List: make([]string, 0),
+			Hash:  commits[i].Hash,
+			Files: make([]File, 0),
 			Commit: struct {
 				Message string `json:"message"`
 				Author  string `json:"author"`
@@ -125,7 +131,10 @@ func (c *Client) Trees() error {
 			},
 		}
 		err := commits[i].Files.ForEach(func(f *object.File) error {
-			tree.List = append(tree.List, f.Name)
+			tree.Files = append(tree.Files, File{
+				Name: filepath.Base(f.Name),
+				Dir:  filepath.Dir(f.Name),
+			})
 			return nil
 		})
 		if err != nil {
