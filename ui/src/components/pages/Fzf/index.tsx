@@ -98,9 +98,11 @@ const FzfFC: FC = () => {
     <div
       style={{
         width: "100%",
-        height: "100%",
+        minHeight: "100%",
         backgroundColor: "#002b36",
         padding: "4px",
+        ...(fzfs[idx] && fzfs[idx].files.length > 0 &&
+          { height: `${fzfs[idx].files.length * 16}px` }),
       }}
     >
       {fzfs.length > 0
