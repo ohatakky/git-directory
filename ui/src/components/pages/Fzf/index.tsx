@@ -1,7 +1,20 @@
-import React, { FC, Fragment, useState, useEffect, useReducer } from "react";
+import React, {
+  FC,
+  Fragment,
+  useState,
+  useEffect,
+  useReducer,
+  ChangeEvent,
+} from "react";
 import { useParams } from "react-router-dom";
 import { WS_API_HOST } from "~/utils/constants";
 import { LinearProgress } from "@material-ui/core";
+import Fuse from "fuse.js";
+
+// todo: cssリファクタ
+// 色をutilsへ
+// typography共通化
+// materialuiに寄せる
 
 type Fzf = {
   hash: string;
@@ -18,10 +31,7 @@ const actionTypes = {
 } as const;
 type ActionType = typeof actionTypes[keyof typeof actionTypes];
 
-const reducer = (
-  state: Fzf[],
-  action: { type: ActionType; payload: Fzf },
-) => {
+const reducer = (state: Fzf[], action: { type: ActionType; payload: Fzf }) => {
   switch (action.type) {
     case actionTypes.success:
       return [...state, action.payload];
@@ -34,6 +44,9 @@ const FzfFC: FC = () => {
   const { org, repo } = useParams();
   const [fzfs, dispatch] = useReducer(reducer, []);
   const [idx, setIdx] = useState(0);
+  const [filter, setFilter] = useState<string>("");
+  const [fzfviews, setFzfviews] = useState<Fuse.FuseResult<string>[]>([]);
+  const prURL = `https://github.com/${org}/${repo}/pulls?q=is%3Apr+hash%3A`;
   useEffect(() => {
     const ws = new WebSocket(`${WS_API_HOST}/ws?repo=${org}/${repo}`);
     ws.onmessage = ({ data }) => {
@@ -69,54 +82,141 @@ const FzfFC: FC = () => {
     };
   }, [fzfs.length]);
 
-  // todo: terminal view
-  // @ ~/git-directory/gorilla/websocket master ()
-  // $ tree
-  // author
-  // PR
+  useEffect(() => {
+    if (!fzfs[idx]) return;
 
-  // todo: loading
-  // todo: fuzzy finder表示
-  // todo: tree表示
+    const fuse = new Fuse(fzfs[idx].files, {
+      isCaseSensitive: true,
+      minMatchCharLength: 2,
+    })
+      .search(filter)
+      .map((f) => f);
+    setFzfviews(fuse);
+  }, [filter]);
 
   return (
-    <div style={{ width: "100%", height: "100%", backgroundColor: "#002b36" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#002b36",
+        padding: "4px",
+      }}
+    >
       {fzfs.length > 0
         ? (
-          <div>
-            <div style={{ display: "flex" }}>
+          <Fragment>
+            <div
+              style={{
+                display: "flex",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+              }}
+            >
               <div
                 style={{ color: "#657b83", fontSize: 10, fontFamily: "Monaco" }}
               >
                 {`@ ~/git-directory/${org}/${repo}`}
               </div>
-              <div
-                style={{ color: "#859900", fontSize: 10, fontFamily: "Monaco" }}
+              <div>&nbsp;&nbsp;</div>
+              <a
+                href={`${prURL} + ${fzfs[idx].hash}`}
+                style={{ textDecoration: "none" }}
+                target="_blank"
               >
-                {fzfs[idx].hash}
-              </div>
+                <div
+                  style={{
+                    color: "#859900",
+                    fontSize: 10,
+                    fontFamily: "Monaco",
+                  }}
+                >
+                  {fzfs[idx].hash}
+                </div>
+              </a>
+              <div>&nbsp;&nbsp;</div>
               <div
                 style={{ color: "#268bd2", fontSize: 10, fontFamily: "Monaco" }}
               >
                 {fzfs[idx].commit.author}
               </div>
+              <div>&nbsp;&nbsp;</div>
+              <div
+                style={{
+                  color: "#eee8d5",
+                  fontSize: 10,
+                  fontFamily: "Monaco",
+                }}
+              >
+                {fzfs[idx].commit.message}
+              </div>
             </div>
 
-            <div
-              style={{ color: "#eee8d5", fontSize: 10, fontFamily: "Monaco" }}
-            >
-              {fzfs[idx].commit.message}
+            <div>
+              <div style={{ display: "flex" }}>
+                <div style={{ marginRight: "4px", display: "flex" }}>
+                  <div
+                    style={{
+                      color: "#b58900",
+                      fontSize: 10,
+                      fontFamily: "Monaco",
+                    }}
+                  >
+                    mode:fzf&nbsp;$
+                  </div>
+                </div>
+                <input
+                  style={{
+                    width: "90%",
+                    backgroundColor: "#002b36",
+                    padding: 0,
+                    border: "none",
+                    borderRadius: 0,
+                    outline: "none",
+                    background: "none",
+                    color: "#eee8d5",
+                    fontSize: 10,
+                    fontFamily: "Monaco",
+                  }}
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setFilter(e.target.value)}
+                />
+              </div>
+              {filter
+                ? (
+                  <Fragment>
+                    {fzfviews.map((f) => (
+                      <div
+                        style={{
+                          color: "#eee8d5",
+                          fontSize: 10,
+                          fontFamily: "Monaco",
+                        }}
+                        key={f.refIndex}
+                      >
+                        {f.item}
+                      </div>
+                    ))}
+                  </Fragment>
+                )
+                : (
+                  <Fragment>
+                    {fzfs[idx].files.map((f, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          color: "#93a1a1",
+                          fontSize: 10,
+                          fontFamily: "Monaco",
+                        }}
+                      >
+                        {f}
+                      </div>
+                    ))}
+                  </Fragment>
+                )}
             </div>
-
-            <div
-              style={{ color: "#eee8d5", fontSize: 10, fontFamily: "Monaco" }}
-            >
-              <div>$ fzf</div>
-              {fzfs[idx].files.map((f, i) => (
-                <div>{f}</div>
-              ))}
-            </div>
-          </div>
+          </Fragment>
         )
         : (
           <LinearProgress />
