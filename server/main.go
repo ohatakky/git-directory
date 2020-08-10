@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/ohatakky/git-directory/server/pkg/git"
 	"github.com/ohatakky/git-directory/server/pkg/uuid"
@@ -32,6 +33,11 @@ func main() {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+		}
+
+		err = os.RemoveAll(g.TmpDir())
+		if err != nil {
+			log.Fatal(err)
 		}
 	})
 
