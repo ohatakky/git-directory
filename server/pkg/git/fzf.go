@@ -3,7 +3,6 @@ package git
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -18,14 +17,14 @@ type Client struct {
 	ID   string
 	Repo string
 	Ref  *git.Repository
-	Send chan *Tree
+	Send chan *Fzf
 }
 
 func New(id, repo string) *Client {
 	return &Client{
 		ID:   id,
 		Repo: repo,
-		Send: make(chan *Tree, 256),
+		Send: make(chan *Fzf, 256),
 	}
 }
 
@@ -65,21 +64,6 @@ func (c *Client) commits() ([]Commit, error) {
 		if err != nil {
 			return err
 		}
-		// tree, err := c.Tree()
-		// if err != nil {
-		// 	return err
-		// }
-		// walker := object.NewTreeWalker(tree, true, nil)
-		// defer walker.Close()
-		// for {
-		// 	name, entry, err := walker.Next()
-		// 	if err == io.EOF {
-		// 		break
-		// 	}
-		// 	if !entry.Mode.IsFile() {
-		// 		fmt.Println(entry.Name, name)
-		// 	}
-		// }
 
 		commits = append(commits, Commit{
 			Hash:    c.Hash.String(),
@@ -96,14 +80,9 @@ func (c *Client) commits() ([]Commit, error) {
 	return commits, nil
 }
 
-type File struct {
-	Dir  string `json:"dir"`
-	Name string `json:"name"`
-}
-
-type Tree struct {
-	Hash   string `json:"hash"`
-	Files  []File `json:"files"`
+type Fzf struct {
+	Hash   string   `json:"hash"`
+	Files  []string `json:"files"`
 	Commit struct {
 		Message string `json:"message"`
 		Author  string `json:"author"`
@@ -111,7 +90,7 @@ type Tree struct {
 }
 
 // todo: error handling (<-error)
-func (c *Client) Trees() error {
+func (c *Client) FuzzyFinder() error {
 	defer close(c.Send)
 	commits, err := c.commits()
 	if err != nil {
@@ -119,9 +98,9 @@ func (c *Client) Trees() error {
 	}
 
 	for i := len(commits) - 1; i >= 0; i-- {
-		tree := Tree{
+		fzf := Fzf{
 			Hash:  commits[i].Hash,
-			Files: make([]File, 0),
+			Files: make([]string, 0),
 			Commit: struct {
 				Message string `json:"message"`
 				Author  string `json:"author"`
@@ -131,16 +110,13 @@ func (c *Client) Trees() error {
 			},
 		}
 		err := commits[i].Files.ForEach(func(f *object.File) error {
-			tree.Files = append(tree.Files, File{
-				Name: filepath.Base(f.Name),
-				Dir:  filepath.Dir(f.Name),
-			})
+			fzf.Files = append(fzf.Files, f.Name)
 			return nil
 		})
 		if err != nil {
 			return err
 		}
-		c.Send <- &tree
+		c.Send <- &fzf
 	}
 
 	return nil

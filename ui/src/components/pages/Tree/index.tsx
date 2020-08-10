@@ -2,14 +2,9 @@ import React, { FC, Fragment, useState, useEffect, useReducer } from "react";
 import { useParams } from "react-router-dom";
 import { WS_API_HOST } from "~/utils/constants";
 
-type File = {
-  dir: string;
-  name: string;
-};
-
 type Tree = {
   hash: string;
-  files: File[];
+  files: string[];
   commit: {
     author: string;
     message: string;
@@ -24,7 +19,7 @@ type ActionType = typeof actionTypes[keyof typeof actionTypes];
 
 const reducer = (
   state: Tree[],
-  action: { type: ActionType; payload: Tree }
+  action: { type: ActionType; payload: Tree },
 ) => {
   switch (action.type) {
     case actionTypes.success:
@@ -73,10 +68,11 @@ const TreeFC: FC = () => {
     };
   }, [trees.length]);
 
-  // todo: reset css
   // todo: loading
   // todo: author
   // todo: PR
+
+  // todo: fuzzy finder表示
   // todo: tree表示
 
   return (
@@ -89,7 +85,7 @@ const TreeFC: FC = () => {
           <div style={{ color: "#eee8d5", fontSize: 10, fontFamily: "Monaco" }}>
             <div>tree</div>
             {trees[idx].files.map((f, i) => (
-              <div key={i}>{`dir: ${f.dir}, file: ${f.name} `}</div>
+              <div>{f}</div>
             ))}
           </div>
         </Fragment>

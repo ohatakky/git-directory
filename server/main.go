@@ -24,7 +24,7 @@ func main() {
 		c := ws.New(w, r)
 		defer c.Conn.Close()
 
-		go g.Trees()
+		go g.FuzzyFinder()
 
 		for tree := range g.Send {
 			err := c.Conn.WriteJSON(tree)
