@@ -13,7 +13,7 @@ const Router: FC<{ history: History }> = ({ history }) => {
   return (
     <ReactRouter history={history}>
       <Switch>
-        <Route path="/root" exact>
+        <Route path="/" exact>
           <Root />
         </Route>
         <Route path="/:org/:repo" exact>
@@ -22,7 +22,7 @@ const Router: FC<{ history: History }> = ({ history }) => {
         <Route path="/">
           <Redirect
             to={{
-              pathname: "/root",
+              pathname: "/",
             }}
           />
         </Route>
