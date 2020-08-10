@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { History } from "history";
 import Root from "~/components/pages/Root";
-import Tree from "~/components/pages/Tree";
+import Fzf from "~/components/pages/Fzf";
 
 const Router: FC<{ history: History }> = ({ history }) => {
   return (
@@ -17,7 +17,7 @@ const Router: FC<{ history: History }> = ({ history }) => {
           <Root />
         </Route>
         <Route path="/:org/:repo" exact>
-          <Tree />
+          <Fzf />
         </Route>
         <Route path="/">
           <Redirect
