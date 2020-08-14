@@ -10,8 +10,6 @@ import (
 	"github.com/ohatakky/git-directory/server/pkg/ws"
 )
 
-// websocat ws://localhost:8080/ws?repo=gorilla/websocket | jq .
-
 func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		repo := r.FormValue("repo")
@@ -19,14 +17,12 @@ func main() {
 		err := g.Clone()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			log.Fatal(err)
 			return
 		}
 
 		c, err := ws.New(w, r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Fatal(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		defer c.Conn.Close()
@@ -37,19 +33,13 @@ func main() {
 			err := c.Conn.WriteJSON(tree)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
-				log.Fatal(err)
-				err = os.RemoveAll(g.TmpDir())
-				if err != nil {
-					log.Fatal(err)
-				}
-				return
+				break
 			}
 		}
 
 		err = os.RemoveAll(g.TmpDir())
 		if err != nil {
-			log.Fatal(err)
-			return
+			log.Println(err)
 		}
 	})
 
