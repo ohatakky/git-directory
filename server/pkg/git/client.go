@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -37,7 +36,6 @@ func (c *Client) TmpDir() string {
 func (c *Client) Clone() error {
 	r, err := git.PlainClone(c.TmpDir(), false, &git.CloneOptions{
 		URL:          fmt.Sprintf("https://github.com/%s/%s", c.Org, c.Repo),
-		Progress:     os.Stdout,
 		SingleBranch: true,
 		NoCheckout:   true,
 		Tags:         git.NoTags,

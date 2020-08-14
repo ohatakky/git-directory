@@ -12,28 +12,31 @@ import (
 
 func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		// websocket upgrader
-		c, err := ws.New(w, r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		defer c.Conn.Close()
-
 		// git client
 		org := r.FormValue("org")
 		repo := r.FormValue("repo")
 		g := git.New(uuid.String(), org, repo)
-		err = g.Clone()
+		err := g.Clone()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Println(err)
 			return
 		}
 		commits, err := g.Commits()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Println(err)
 			return
 		}
+
+		// websocket upgrader
+		c, err := ws.New(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+		defer c.Conn.Close()
 
 		// fzf
 		go g.FuzzyFinder(commits)
@@ -46,6 +49,7 @@ func main() {
 			case send, ok := <-g.Send:
 				if !ok {
 					done = true
+					break
 				}
 				err := c.Conn.WriteJSON(send)
 				if err != nil {

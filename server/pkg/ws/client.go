@@ -16,8 +16,6 @@ func New(w http.ResponseWriter, r *http.Request) (*Client, error) {
 			// return r.Header.Get("Origin") == "xxxxx"
 			return true
 		},
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
