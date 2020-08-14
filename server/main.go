@@ -19,10 +19,16 @@ func main() {
 		err := g.Clone()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Fatal(err)
 			return
 		}
 
-		c := ws.New(w, r)
+		c, err := ws.New(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Fatal(err)
+			return
+		}
 		defer c.Conn.Close()
 
 		go g.FuzzyFinder()
@@ -31,6 +37,7 @@ func main() {
 			err := c.Conn.WriteJSON(tree)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Fatal(err)
 				err = os.RemoveAll(g.TmpDir())
 				if err != nil {
 					log.Fatal(err)
@@ -42,6 +49,7 @@ func main() {
 		err = os.RemoveAll(g.TmpDir())
 		if err != nil {
 			log.Fatal(err)
+			return
 		}
 	})
 
