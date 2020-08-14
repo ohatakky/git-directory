@@ -1,12 +1,12 @@
-import React, { FC, Fragment } from "react";
+import React, { FC } from "react";
+import Logo from "~/assets/logo.png"
 
 // todo: ロゴとデモ動画 (URLにリポジトリ名入力させる)
 const Root: FC = () => {
   return (
-    <Fragment>
-      <Fragment>
-      </Fragment>
-    </Fragment>
+    <div>
+      <img src={Logo} />
+    </div>
   );
 };
 

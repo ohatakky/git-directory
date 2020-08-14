@@ -30,7 +30,16 @@ module.exports = {
     },
   },
   module: {
-    rules: [{ test: /\.tsx?$/, loader: "ts-loader" }],
+    rules: [
+      {
+        test: /\.tsx?$/,
+        loader: "ts-loader"
+      },
+      {
+       test: /\.(jpg|png|svg|gif)$/,
+       use: { loader: "url-loader" },
+      }
+    ],
   },
   devServer: {
     historyApiFallback: true,

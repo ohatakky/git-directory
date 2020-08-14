@@ -40,7 +40,7 @@ const reducer = (state: Fzf[], action: { type: ActionType; payload: Fzf }) => {
   }
 };
 
-const FzfFC: FC = () => {
+const Views: FC = () => {
   const { org, repo } = useParams();
   const [fzfs, dispatch] = useReducer(reducer, []);
   const [idx, setIdx] = useState(0);
@@ -227,4 +227,4 @@ const FzfFC: FC = () => {
   );
 };
 
-export default FzfFC;
+export default Views;
