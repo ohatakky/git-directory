@@ -1,1 +1,7 @@
-runtime: go113
+runtime: go
+env: flex
+
+service: git-directory
+
+network:
+  session_affinity: true

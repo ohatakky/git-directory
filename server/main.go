@@ -31,6 +31,10 @@ func main() {
 			err := c.Conn.WriteJSON(tree)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				err = os.RemoveAll(g.TmpDir())
+				if err != nil {
+					log.Fatal(err)
+				}
 				return
 			}
 		}
