@@ -41,9 +41,11 @@ type Commit struct {
 
 func (c *Client) Clone() error {
 	r, err := git.PlainClone(c.TmpDir(), false, &git.CloneOptions{
-		URL:        fmt.Sprintf("https://github.com/%s", c.Repo),
-		Progress:   os.Stdout,
-		NoCheckout: true,
+		URL:          fmt.Sprintf("https://github.com/%s", c.Repo),
+		Progress:     os.Stdout,
+		SingleBranch: true,
+		NoCheckout:   true,
+		Tags:         git.NoTags,
 	})
 	if err != nil {
 		return err
@@ -55,7 +57,9 @@ func (c *Client) Clone() error {
 
 func (c *Client) commits() ([]Commit, error) {
 	commits := make([]Commit, 0)
-	cIter, err := c.Ref.Log(&git.LogOptions{})
+	cIter, err := c.Ref.Log(&git.LogOptions{
+		Order: git.LogOrderCommitterTime,
+	})
 	if err != nil {
 		return nil, err
 	}
