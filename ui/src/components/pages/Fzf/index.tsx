@@ -48,7 +48,7 @@ const FzfFC: FC = () => {
   const [fzfviews, setFzfviews] = useState<Fuse.FuseResult<string>[]>([]);
   const prURL = `https://github.com/${org}/${repo}/pulls?q=is%3Apr+hash%3A`;
   useEffect(() => {
-    const ws = new WebSocket(`${WS_API_HOST}/ws?repo=${org}/${repo}`);
+    const ws = new WebSocket(`${WS_API_HOST}/ws?org=${org}&repo=${repo}`);
     ws.onmessage = ({ data }) => {
       try {
         const packet = JSON.parse(data) as Fzf;

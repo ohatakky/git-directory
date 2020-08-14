@@ -12,14 +12,7 @@ import (
 
 func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		repo := r.FormValue("repo")
-		g := git.New(uuid.String(), repo)
-		err := g.Clone()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
+		// websocket upgrader
 		c, err := ws.New(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -27,16 +20,49 @@ func main() {
 		}
 		defer c.Conn.Close()
 
-		go g.FuzzyFinder()
+		// git client
+		org := r.FormValue("org")
+		repo := r.FormValue("repo")
+		g := git.New(uuid.String(), org, repo)
+		err = g.Clone()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		commits, err := g.Commits()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-		for tree := range g.Send {
-			err := c.Conn.WriteJSON(tree)
-			if err != nil {
+		// fzf
+		go g.FuzzyFinder(commits)
+		// tree
+		// go g.Tree(commits)
+
+		for {
+			var done bool
+			select {
+			case send, ok := <-g.Send:
+				if !ok {
+					done = true
+				}
+				err := c.Conn.WriteJSON(send)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					done = true
+				}
+			case err := <-g.Error:
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				done = true
+			}
+
+			if done {
 				break
 			}
 		}
 
+		// remove tmp dir
 		err = os.RemoveAll(g.TmpDir())
 		if err != nil {
 			log.Println(err)
