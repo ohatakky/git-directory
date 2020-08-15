@@ -20,6 +20,13 @@ const useStyles = makeStyles({
     fontSize: 10,
     fontFamily: "Monaco",
   },
+  group: {
+    borderLeft: "1px solid #93a1a1",
+    boxSizing: "border-box",
+  },
+  iconContainer: {
+    marginRight: 0,
+  },
 });
 
 type TreeNode = {
@@ -135,7 +142,7 @@ const Views: FC = () => {
   // tree
   useEffect(() => {
     if (!commits[idx]) return;
-    const exps: string[] = [];
+    const exps: string[] = ["."];
     const tree: TreeNode[] = [];
     const objects = commits[idx].objects;
     for (let i = 0; i < objects.length; i++) {
@@ -146,7 +153,7 @@ const Views: FC = () => {
       }
       createNode(split, tree);
     }
-    setTrees(tree);
+    setTrees([{ name: ".", children: tree }]);
     setExpands(exps);
   }, [commits[0], idx]);
 
@@ -159,7 +166,7 @@ const Views: FC = () => {
         padding: "4px",
         ...(commits[idx] &&
           commits[idx].objects.length > 0 && {
-          height: `${commits[idx].objects.length * 16}px`,
+          height: `${commits[idx].objects.length * 20}px + 20px + 20px`,
         }),
       }}
     >
@@ -260,7 +267,19 @@ const Views: FC = () => {
                   </Fragment>
                 )
                 : (
-                  <TreeView expanded={expands}>
+                  <TreeView
+                    expanded={expands}
+                    defaultCollapseIcon={<div style={{ color: "#93a1a1" }}>
+                      ─
+                    </div>}
+                    defaultExpandIcon={<div style={{ color: "#93a1a1" }}>
+                      ├─
+                    </div>}
+                    defaultParentIcon={<div style={{ color: "#93a1a1" }}>
+                      ├─
+                    </div>}
+                    defaultEndIcon={<div style={{ color: "#93a1a1" }}>─</div>}
+                  >
                     {trees.map((t) => (
                       <TreeItemRecursive
                         key={t.name}
@@ -289,6 +308,8 @@ const TreeItemRecursive: FC<TreeNode> = ({ name, children }) => {
     <TreeItem
       classes={{
         label: classes.label,
+        group: classes.group,
+        iconContainer: classes.iconContainer,
       }}
       nodeId={name}
       label={name}
