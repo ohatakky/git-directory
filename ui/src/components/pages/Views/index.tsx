@@ -15,8 +15,6 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import { WS_API_HOST } from "~/utils/constants";
 
 const useStyles = makeStyles({
-  root: {},
-  item: {},
   label: {
     color: "#93a1a1",
     fontSize: 10,
@@ -67,7 +65,7 @@ type ActionType = typeof actionTypes[keyof typeof actionTypes];
 
 const reducer = (
   state: Commit[],
-  action: { type: ActionType; payload: Commit }
+  action: { type: ActionType; payload?: Commit },
 ) => {
   switch (action.type) {
     case actionTypes.success:
@@ -96,10 +94,7 @@ const Views: FC = () => {
         const packet = JSON.parse(data) as Commit;
         dispatch({ type: actionTypes.success, payload: packet });
       } catch (e) {
-        dispatch({
-          type: actionTypes.failed,
-          payload: { hash: "", objects: [], author: "", message: "" },
-        });
+        dispatch({ type: actionTypes.failed });
       }
     };
     return (): void => {
@@ -164,122 +159,125 @@ const Views: FC = () => {
         padding: "4px",
         ...(commits[idx] &&
           commits[idx].objects.length > 0 && {
-            height: `${commits[idx].objects.length * 16}px`,
-          }),
+          height: `${commits[idx].objects.length * 16}px`,
+        }),
       }}
     >
-      {commits.length > 0 ? (
-        <Fragment>
-          <div
-            style={{
-              display: "flex",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <div
-              style={{ color: "#657b83", fontSize: 10, fontFamily: "Monaco" }}
-            >
-              {`@ ~/git-directory/${org}/${repo}`}
-            </div>
-            <div>&nbsp;&nbsp;</div>
-            <a
-              href={`${prURL} + ${commits[idx].hash}`}
-              style={{ textDecoration: "none" }}
-              target="_blank"
-            >
-              <div
-                style={{
-                  color: "#859900",
-                  fontSize: 10,
-                  fontFamily: "Monaco",
-                }}
-              >
-                {commits[idx].hash}
-              </div>
-            </a>
-            <div>&nbsp;&nbsp;</div>
-            <div
-              style={{ color: "#268bd2", fontSize: 10, fontFamily: "Monaco" }}
-            >
-              {commits[idx].author}
-            </div>
-            <div>&nbsp;&nbsp;</div>
+      {commits.length > 0
+        ? (
+          <Fragment>
             <div
               style={{
-                color: "#eee8d5",
-                fontSize: 10,
-                fontFamily: "Monaco",
+                display: "flex",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
               }}
             >
-              {commits[idx].message}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: "flex" }}>
-              <div style={{ marginRight: "4px", display: "flex" }}>
+              <div
+                style={{ color: "#657b83", fontSize: 10, fontFamily: "Monaco" }}
+              >
+                {`@ ~/git-directory/${org}/${repo}`}
+              </div>
+              <div>&nbsp;&nbsp;</div>
+              <a
+                href={`${prURL} + ${commits[idx].hash}`}
+                style={{ textDecoration: "none" }}
+                target="_blank"
+              >
                 <div
                   style={{
-                    color: "#b58900",
+                    color: "#859900",
                     fontSize: 10,
                     fontFamily: "Monaco",
                   }}
                 >
-                  mode:tree&nbsp;$
+                  {commits[idx].hash}
                 </div>
+              </a>
+              <div>&nbsp;&nbsp;</div>
+              <div
+                style={{ color: "#268bd2", fontSize: 10, fontFamily: "Monaco" }}
+              >
+                {commits[idx].author}
               </div>
-              <input
+              <div>&nbsp;&nbsp;</div>
+              <div
                 style={{
-                  width: "90%",
-                  backgroundColor: "#002b36",
-                  padding: 0,
-                  border: "none",
-                  borderRadius: 0,
-                  outline: "none",
-                  background: "none",
                   color: "#eee8d5",
                   fontSize: 10,
                   fontFamily: "Monaco",
                 }}
-                onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-                  setFilter(e.target.value)
-                }
-              />
+              >
+                {commits[idx].message}
+              </div>
             </div>
-            {filter ? (
-              <Fragment>
-                {fzfs.map((f) => (
+
+            <div>
+              <div style={{ display: "flex" }}>
+                <div style={{ marginRight: "4px", display: "flex" }}>
                   <div
                     style={{
-                      color: "#eee8d5",
+                      color: "#b58900",
                       fontSize: 10,
                       fontFamily: "Monaco",
                     }}
-                    key={f.refIndex}
                   >
-                    {f.item.name}
+                    mode:tree&nbsp;$
                   </div>
-                ))}
-              </Fragment>
-            ) : (
-              <Fragment>
-                <TreeView expanded={expands}>
-                  {trees.map((t) => (
-                    <TreeItemRecursive
-                      key={t.name}
-                      name={t.name}
-                      children={t.children}
-                    />
-                  ))}
-                </TreeView>
-              </Fragment>
-            )}
-          </div>
-        </Fragment>
-      ) : (
-        <LinearProgress />
-      )}
+                </div>
+                <input
+                  style={{
+                    width: "90%",
+                    backgroundColor: "#002b36",
+                    padding: 0,
+                    border: "none",
+                    borderRadius: 0,
+                    outline: "none",
+                    background: "none",
+                    color: "#eee8d5",
+                    fontSize: 10,
+                    fontFamily: "Monaco",
+                  }}
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setFilter(e.target.value)}
+                />
+              </div>
+              {filter
+                ? (
+                  <Fragment>
+                    {fzfs.map((f) => (
+                      <div
+                        style={{
+                          color: "#eee8d5",
+                          fontSize: 10,
+                          fontFamily: "Monaco",
+                        }}
+                        key={f.refIndex}
+                      >
+                        {f.item.name}
+                      </div>
+                    ))}
+                  </Fragment>
+                )
+                : (
+                  <Fragment>
+                    <TreeView expanded={expands}>
+                      {trees.map((t) => (
+                        <TreeItemRecursive
+                          key={t.name}
+                          name={t.name}
+                          children={t.children}
+                        />
+                      ))}
+                    </TreeView>
+                  </Fragment>
+                )}
+            </div>
+          </Fragment>
+        )
+        : (
+          <LinearProgress />
+        )}
     </div>
   );
 };
