@@ -22,12 +22,6 @@ func main() {
 			log.Println(err)
 			return
 		}
-		commits, err := g.Commits()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			log.Println(err)
-			return
-		}
 
 		// websocket upgrader
 		c, err := ws.New(w, r)
@@ -38,11 +32,8 @@ func main() {
 		}
 		defer c.Conn.Close()
 
-		// fzf
-		go g.FuzzyFinder(commits)
-		// tree
-		// go g.Tree(commits)
-
+		// main
+		go g.Commits()
 		for {
 			var done bool
 			select {

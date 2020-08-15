@@ -13,14 +13,12 @@ type Client struct {
 func New(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			// return r.Header.Get("Origin") == "xxxxx"
-			return true
+			return r.Header.Get("Origin") == "http://localhost:3001" || r.Header.Get("Origin") == "https://git-directory-dot-akki-256705.appspot.com"
 		},
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	return &Client{Conn: conn}, nil
 }

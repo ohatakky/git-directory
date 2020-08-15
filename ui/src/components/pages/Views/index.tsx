@@ -11,18 +11,16 @@ import { WS_API_HOST } from "~/utils/constants";
 import { LinearProgress } from "@material-ui/core";
 import Fuse from "fuse.js";
 
-// todo: cssリファクタ
-// 色をutilsへ
-// typography共通化
-// materialuiに寄せる
+type Object = {
+  name: string;
+  is_file: string;
+};
 
-type Fzf = {
+type Commit = {
   hash: string;
-  files: string[];
-  commit: {
-    author: string;
-    message: string;
-  };
+  message: string;
+  author: string;
+  objects: Object[];
 };
 
 const actionTypes = {
@@ -31,7 +29,10 @@ const actionTypes = {
 } as const;
 type ActionType = typeof actionTypes[keyof typeof actionTypes];
 
-const reducer = (state: Fzf[], action: { type: ActionType; payload: Fzf }) => {
+const reducer = (
+  state: Commit[],
+  action: { type: ActionType; payload: Commit },
+) => {
   switch (action.type) {
     case actionTypes.success:
       return [...state, action.payload];
@@ -42,21 +43,24 @@ const reducer = (state: Fzf[], action: { type: ActionType; payload: Fzf }) => {
 
 const Views: FC = () => {
   const { org, repo } = useParams();
-  const [fzfs, dispatch] = useReducer(reducer, []);
+  const [commits, dispatch] = useReducer(reducer, []);
   const [idx, setIdx] = useState(0);
   const [filter, setFilter] = useState<string>("");
-  const [fzfviews, setFzfviews] = useState<Fuse.FuseResult<string>[]>([]);
+
+  const [fzfs, setFzfs] = useState<Fuse.FuseResult<Object>[]>([]);
   const prURL = `https://github.com/${org}/${repo}/pulls?q=is%3Apr+hash%3A`;
+
+  // webscoket read message
   useEffect(() => {
     const ws = new WebSocket(`${WS_API_HOST}/ws?org=${org}&repo=${repo}`);
     ws.onmessage = ({ data }) => {
       try {
-        const packet = JSON.parse(data) as Fzf;
+        const packet = JSON.parse(data) as Commit;
         dispatch({ type: actionTypes.success, payload: packet });
       } catch (e) {
         dispatch({
           type: actionTypes.failed,
-          payload: { hash: "", files: [], commit: { author: "", message: "" } },
+          payload: { hash: "", objects: [], author: "", message: "" },
         });
       }
     };
@@ -67,31 +71,32 @@ const Views: FC = () => {
     };
   }, []);
 
+  // keyboard
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.keyCode === 37) {
         setIdx((i) => (i <= 0 ? i : i - 1));
       } else if (e.keyCode === 39) {
-        setIdx((i) => (i >= fzfs.length - 1 ? i : i + 1));
+        setIdx((i) => (i >= commits.length - 1 ? i : i + 1));
       }
     };
     document.addEventListener("keydown", onKeyDown);
-
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [fzfs.length]);
+  }, [commits.length]);
 
+  // fzf
   useEffect(() => {
-    if (!fzfs[idx]) return;
-
-    const fuse = new Fuse(fzfs[idx].files, {
+    if (!commits[idx]) return;
+    const fuse = new Fuse(commits[idx].objects, {
       isCaseSensitive: true,
       minMatchCharLength: 2,
+      keys: ["name"],
     })
       .search(filter)
       .map((f) => f);
-    setFzfviews(fuse);
+    setFzfs(fuse);
   }, [filter]);
 
   return (
@@ -101,11 +106,11 @@ const Views: FC = () => {
         minHeight: "100%",
         backgroundColor: "#002b36",
         padding: "4px",
-        ...(fzfs[idx] && fzfs[idx].files.length > 0 &&
-          { height: `${fzfs[idx].files.length * 16}px` }),
+        ...(commits[idx] && commits[idx].objects.length > 0 &&
+          { height: `${commits[idx].objects.length * 16}px` }),
       }}
     >
-      {fzfs.length > 0
+      {commits.length > 0
         ? (
           <Fragment>
             <div
@@ -122,7 +127,7 @@ const Views: FC = () => {
               </div>
               <div>&nbsp;&nbsp;</div>
               <a
-                href={`${prURL} + ${fzfs[idx].hash}`}
+                href={`${prURL} + ${commits[idx].hash}`}
                 style={{ textDecoration: "none" }}
                 target="_blank"
               >
@@ -133,14 +138,14 @@ const Views: FC = () => {
                     fontFamily: "Monaco",
                   }}
                 >
-                  {fzfs[idx].hash}
+                  {commits[idx].hash}
                 </div>
               </a>
               <div>&nbsp;&nbsp;</div>
               <div
                 style={{ color: "#268bd2", fontSize: 10, fontFamily: "Monaco" }}
               >
-                {fzfs[idx].commit.author}
+                {commits[idx].author}
               </div>
               <div>&nbsp;&nbsp;</div>
               <div
@@ -150,7 +155,7 @@ const Views: FC = () => {
                   fontFamily: "Monaco",
                 }}
               >
-                {fzfs[idx].commit.message}
+                {commits[idx].message}
               </div>
             </div>
 
@@ -187,7 +192,7 @@ const Views: FC = () => {
               {filter
                 ? (
                   <Fragment>
-                    {fzfviews.map((f) => (
+                    {fzfs.map((f) => (
                       <div
                         style={{
                           color: "#eee8d5",
@@ -196,14 +201,14 @@ const Views: FC = () => {
                         }}
                         key={f.refIndex}
                       >
-                        {f.item}
+                        {f.item.name}
                       </div>
                     ))}
                   </Fragment>
                 )
                 : (
                   <Fragment>
-                    {fzfs[idx].files.map((f, i) => (
+                    {commits[idx].objects.map((f, i) => (
                       <div
                         key={i}
                         style={{
@@ -212,7 +217,7 @@ const Views: FC = () => {
                           fontFamily: "Monaco",
                         }}
                       >
-                        {f}
+                        {f.name}
                       </div>
                     ))}
                   </Fragment>
