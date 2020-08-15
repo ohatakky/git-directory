@@ -260,17 +260,15 @@ const Views: FC = () => {
                   </Fragment>
                 )
                 : (
-                  <Fragment>
-                    <TreeView expanded={expands}>
-                      {trees.map((t) => (
-                        <TreeItemRecursive
-                          key={t.name}
-                          name={t.name}
-                          children={t.children}
-                        />
-                      ))}
-                    </TreeView>
-                  </Fragment>
+                  <TreeView expanded={expands}>
+                    {trees.map((t) => (
+                      <TreeItemRecursive
+                        key={t.name}
+                        name={t.name}
+                        children={t.children}
+                      />
+                    ))}
+                  </TreeView>
                 )}
             </div>
           </Fragment>
